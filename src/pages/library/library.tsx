@@ -1,10 +1,11 @@
-import { createMemo, createSignal, For, JSXElement, Show } from 'solid-js'
+import { createMemo, createSignal, For, JSXElement, Show, onMount } from 'solid-js'
 import { Outlet, useNavigate, NavLink, useMatch } from 'solid-app-router'
 import { CSSTransition } from '~/components/css-transition/css-transition'
 import { Icon } from '~/components/icon/icon'
 import { IconButton } from '~/components/icon-button/icon-button'
 import { useMenu } from '~/components/menu/menu'
-import { useEntitiesStore, useLibraryStore } from '~/stores/stores'
+// Removed useEntitiesStore
+import { useLibraryStore } from '~/stores/stores'
 import { MessageBanner } from '~/components/message-banner/message-banner'
 import { LibraryPageConfig, CONFIG } from './config'
 import { MusicItemType } from '~/types/types'
@@ -167,8 +168,7 @@ const NavigationButtons = (props: NavigationButtonsProps) => (
 )
 
 const Library = (): JSXElement => {
-  const [entities] = useEntitiesStore()
-
+  const [localTracks, setLocalTracks] = createSignal<Record<string, any>>({})
   const isMedium = createMediaQuery('(max-width: 500px)')
 
   const selectedPage = useMapRouteToValue({
@@ -181,6 +181,23 @@ const Library = (): JSXElement => {
   const pageConfig = createMemo(
     () => CONFIG.find((c) => c.type === selectedPage())!,
   )
+
+  onMount(async () => {
+    try {
+      const response = await fetch('/songs.json')
+      const songs = await response.json()
+
+      // Convert array to object with song.id as keys
+      const trackMap = songs.reduce((acc, song) => {
+        acc[song.id] = song
+        return acc
+      }, {} as Record<string, any>)
+
+      setLocalTracks(trackMap)
+    } catch (error) {
+      console.error('Failed to fetch songs.json:', error)
+    }
+  })
 
   return (
     <Scaffold
@@ -199,7 +216,7 @@ const Library = (): JSXElement => {
       }
     >
       <Show
-        when={Object.keys(entities.tracks).length}
+        when={Object.keys(localTracks()).length}
         fallback={
           <MessageBanner
             title='Your Library is empty'
