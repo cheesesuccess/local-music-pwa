@@ -16,6 +16,8 @@ import { createMediaQuery } from '~/helpers/hooks/create-media-query'
 import { clx, IS_DEVICE_A_MOBILE } from '~/utils'
 import * as styles from './library.css'
 
+import songs from './songs.json'
+
 const [installEvent, setInstallEvent] = createSignal<BeforeInstallPromptEvent>()
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault()
