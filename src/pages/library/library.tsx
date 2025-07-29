@@ -4,7 +4,6 @@ import { CSSTransition } from '~/components/css-transition/css-transition'
 import { Icon } from '~/components/icon/icon'
 import { IconButton } from '~/components/icon-button/icon-button'
 import { useMenu } from '~/components/menu/menu'
-// Removed useEntitiesStore
 import { useLibraryStore } from '~/stores/stores'
 import { MessageBanner } from '~/components/message-banner/message-banner'
 import { LibraryPageConfig, CONFIG } from './config'
@@ -24,11 +23,11 @@ window.addEventListener('beforeinstallprompt', (e) => {
   setInstallEvent(e as BeforeInstallPromptEvent)
 })
 
-interface TopBar {
+interface TopBarProps {
   tabs?: JSXElement
 }
 
-const TopBar = (props: TopBar) => {
+const TopBar = (props: TopBarProps) => {
   const navigate = useNavigate()
   const menu = useMenu()
   const [libraryState, libraryActions] = useLibraryStore()
@@ -36,22 +35,14 @@ const TopBar = (props: TopBar) => {
   const onMenuClickHandler = (e: MouseEvent) => {
     menu.show(
       [
-        {
-          name: 'Settings',
-          action: () => navigate('/settings'),
-        },
-        {
-          name: 'About',
-          action: () => navigate('/about'),
-        },
+        { name: 'Settings', action: () => navigate('/settings') },
+        { name: 'About', action: () => navigate('/about') },
       ],
       e.target as HTMLElement,
       {
         anchor: true,
-        preferredAlign: {
-          horizontal: 'right',
-        },
-      },
+        preferredAlign: { horizontal: 'right' },
+      }
     )
   }
 
@@ -63,25 +54,18 @@ const TopBar = (props: TopBar) => {
       artists: MusicItemType.ARTIST,
       playlists: MusicItemType.PLAYLIST,
     }
-
     const page = routeMatch()?.params.page as keyof typeof PAGE_TO_TYPE_MAP
-
     return PAGE_TO_TYPE_MAP[page]
   })
 
   const onSortMenuHandler = (e: MouseEvent) => {
     const pageType = selectedPage()
     const pageConfig = CONFIG.find((c) => c.type === pageType)
-
-    if (!pageConfig || pageType === undefined) {
-      return
-    }
+    if (!pageConfig || pageType === undefined) return
 
     const menuItems = pageConfig.sortOptions.map((item) => ({
       name: item.name,
-      action: () => {
-        libraryActions.sort({ type: pageType, key: item.key as 'name' })
-      },
+      action: () => libraryActions.sort({ type: pageType, key: item.key as 'name' }),
       selected: libraryState.sortKeys[pageType] === item.key,
     }))
 
@@ -94,18 +78,12 @@ const TopBar = (props: TopBar) => {
 
   const onInstallClickHandler = () => {
     const installE = installEvent()
-    if (!installE) {
-      return
-    }
-
-    installE
-      .prompt()
-      .then(() => installE.userChoice)
-      .then((choice) => {
-        if (choice.outcome === 'accepted') {
-          setInstallEvent(undefined)
-        }
-      })
+    if (!installE) return
+    installE.prompt().then(() => installE.userChoice).then((choice) => {
+      if (choice.outcome === 'accepted') {
+        setInstallEvent(undefined)
+      }
+    })
   }
 
   return (
@@ -115,17 +93,9 @@ const TopBar = (props: TopBar) => {
           Install
         </button>
       </Show>
-      <IconButton
-        icon='search'
-        title='Search'
-        onClick={() => navigate('/search')}
-      />
+      <IconButton icon='search' title='Search' onClick={() => navigate('/search')} />
       <IconButton icon='sort' title='Sort' onClick={onSortMenuHandler} />
-      <IconButton
-        icon='moreVertical'
-        title='More actions'
-        onClick={onMenuClickHandler}
-      />
+      <IconButton icon='moreVertical' title='More actions' onClick={onMenuClickHandler} />
     </AppTopBar>
   )
 }
@@ -147,30 +117,21 @@ interface NavigationButtonsProps {
 
 const getNavButtonsclass = (type: NavigationButtonsProps['type']) => {
   switch (type) {
-    case 'rail':
-      return styles.navRail
-    case 'bottom':
-      return styles.navBottomBar
-    case 'tabs':
-      return styles.navTabs
-    default:
-      throw new Error('Unknown type')
+    case 'rail': return styles.navRail
+    case 'bottom': return styles.navBottomBar
+    case 'tabs': return styles.navTabs
+    default: throw new Error('Unknown type')
   }
 }
 
 const NavigationButtons = (props: NavigationButtonsProps) => (
-  <div
-    class={clx(
-      getNavButtonsclass(props.type),
-      props.type === 'bottom' && styles.elavated,
-    )}
-  >
+  <div class={clx(getNavButtonsclass(props.type), props.type === 'bottom' && styles.elavated)}>
     <For each={CONFIG}>{NavButton}</For>
   </div>
 )
 
 const Library = (): JSXElement => {
-  const [localTracks, setLocalTracks] = createSignal<Record<string, any>>({})
+  const [localTracks, setLocalTracks] = createSignal(songs)
   const isMedium = createMediaQuery('(max-width: 500px)')
 
   const selectedPage = useMapRouteToValue({
@@ -180,58 +141,40 @@ const Library = (): JSXElement => {
     '/library/playlists': () => MusicItemType.PLAYLIST,
   })
 
-  const pageConfig = createMemo(
-    () => CONFIG.find((c) => c.type === selectedPage())!,
-  )
-
-  onMount(async () => {
-    try {
-      const response = await fetch('/songs.json')
-      const songs = await response.json()
-
-      // Convert array to object with song.id as keys
-      const trackMap = songs.reduce((acc, song) => {
-        acc[song.id] = song
-        return acc
-      }, {} as Record<string, any>)
-
-      setLocalTracks(trackMap)
-    } catch (error) {
-      console.error('Failed to fetch songs.json:', error)
-    }
-  })
+  const pageConfig = createMemo(() => CONFIG.find((c) => c.type === selectedPage())!)
 
   return (
     <Scaffold
       title={`Library ${pageConfig()?.title}`}
       topBar={
-        <TopBar
-          tabs={
-            isMedium() &&
-            !IS_DEVICE_A_MOBILE && <NavigationButtons type='tabs' />
-          }
-        />
+        <TopBar tabs={isMedium() && !IS_DEVICE_A_MOBILE && <NavigationButtons type='tabs' />} />
       }
       navRail={!isMedium() && <NavigationButtons type='rail' />}
-      bottomBar={
-        isMedium() && IS_DEVICE_A_MOBILE && <NavigationButtons type='bottom' />
-      }
+      bottomBar={isMedium() && IS_DEVICE_A_MOBILE && <NavigationButtons type='bottom' />}
     >
       <Show
-        when={Object.keys(localTracks()).length}
+        when={localTracks().length > 0}
         fallback={
           <MessageBanner
             title='Your Library is empty'
-            button={{
-              title: 'Import some music',
-              href: '/settings',
-            }}
+            button={{ title: 'Import some music', href: '/settings' }}
           />
         }
       >
         <div class={styles.content}>
           <CSSTransition enter={styles.enterPage} exit={styles.exitPage}>
-            <Outlet />
+            <div>
+              <For each={localTracks()}>
+                {(track) => (
+                  <div style={{ marginBottom: '1rem', borderBottom: '1px solid #ddd', paddingBottom: '1rem' }}>
+                    <img src={track.cover} alt={track.title} width={80} height={80} style={{ float: 'left', marginRight: '1rem' }} />
+                    <div><strong>{track.title}</strong></div>
+                    <div>{track.artist} — {track.album}</div>
+                    <audio controls src={track.url} style={{ marginTop: '0.5rem', width: '100%' }} />
+                  </div>
+                )}
+              </For>
+            </div>
           </CSSTransition>
         </div>
       </Show>
