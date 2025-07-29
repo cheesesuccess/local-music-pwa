@@ -1,0 +1,18 @@
+[
+  {
+    "id": "song-001",
+    "title": "Dream Escape",
+    "artist": "Isis Sibanda",
+    "album": "Night Skies",
+    "cover": "https://f003.backblazeb2.com/file/TotalSongs/PART+1.jpg",
+    "url": "https://f003.backblazeb2.com/file/TotalSongs/dream_escape.mp3"
+  },
+  {
+    "id": "song-002",
+    "title": "Ocean Breeze",
+    "artist": "Isis Sibanda",
+    "album": "Nature Flow",
+    "cover": "https://f003.backblazeb2.com/file/TotalSongs/PART+2.jpg",
+    "url": "https://f003.backblazeb2.com/file/TotalSongs/ocean_breeze.mp3"
+  }
+]
