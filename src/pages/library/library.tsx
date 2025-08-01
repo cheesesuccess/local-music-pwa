@@ -4,8 +4,8 @@ import { CSSTransition } from '~/components/css-transition/css-transition'
 import { Icon } from '~/components/icon/icon'
 import { IconButton } from '~/components/icon-button/icon-button'
 import { useMenu } from '~/components/menu/menu'
-import { useEntitiesStore } from '~/stores/entities/create-entities-store'
 import { useLibraryStore } from '~/stores/stores'
+import { entitiesActions } from '~/stores/entities/create-entities-store'
 import { MessageBanner } from '~/components/message-banner/message-banner'
 import { LibraryPageConfig, CONFIG } from './config'
 import { MusicItemType } from '~/types/types'
@@ -15,12 +15,6 @@ import { AppTopBar } from '~/components/app-top-bar/app-top-bar'
 import { createMediaQuery } from '~/helpers/hooks/create-media-query'
 import { clx, IS_DEVICE_A_MOBILE } from '~/utils'
 import * as styles from './library.css'
-import { entitiesActions } from '~/stores/entities/create-entities-store'
-
-onMount(() => {
-  entitiesActions.addTracks()
-})
-
 
 const [installEvent, setInstallEvent] = createSignal<BeforeInstallPromptEvent>()
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -33,23 +27,34 @@ interface TopBar {
 }
 
 const TopBar = (props: TopBar) => {
-  const [entitiesState, { addTracks }] = useEntitiesStore();
-  onMount(() => {
-    addTracks(); // Load songs from cloud on app start
-  });
-
   const navigate = useNavigate()
   const menu = useMenu()
   const [libraryState, libraryActions] = useLibraryStore()
 
+  // ✅ Load songs from cloud on page mount
+  onMount(() => {
+    entitiesActions.importTracks()
+  })
+
   const onMenuClickHandler = (e: MouseEvent) => {
     menu.show(
       [
-        { name: 'Settings', action: () => navigate('/settings') },
-        { name: 'About', action: () => navigate('/about') },
+        {
+          name: 'Settings',
+          action: () => navigate('/settings'),
+        },
+        {
+          name: 'About',
+          action: () => navigate('/about'),
+        },
       ],
       e.target as HTMLElement,
-      { anchor: true, preferredAlign: { horizontal: 'right' } },
+      {
+        anchor: true,
+        preferredAlign: {
+          horizontal: 'right',
+        },
+      },
     )
   }
 
@@ -77,6 +82,7 @@ const TopBar = (props: TopBar) => {
       },
       selected: libraryState.sortKeys[pageType] === item.key,
     }))
+
     menu.show(menuItems, e.target as HTMLElement, {
       anchor: true,
       preferredAlign: { horizontal: 'right' },
@@ -88,15 +94,22 @@ const TopBar = (props: TopBar) => {
     const installE = installEvent()
     if (!installE) return
 
-    installE.prompt().then(() => installE.userChoice).then((choice) => {
-      if (choice.outcome === 'accepted') setInstallEvent(undefined)
-    })
+    installE
+      .prompt()
+      .then(() => installE.userChoice)
+      .then((choice) => {
+        if (choice.outcome === 'accepted') {
+          setInstallEvent(undefined)
+        }
+      })
   }
 
   return (
     <AppTopBar mainButton={false} title='Library' belowContent={props.tabs}>
       <Show when={installEvent()}>
-        <button class={styles.tonalButton} onClick={onInstallClickHandler}>Install</button>
+        <button class={styles.tonalButton} onClick={onInstallClickHandler}>
+          Install
+        </button>
       </Show>
       <IconButton icon='search' title='Search' onClick={() => navigate('/search')} />
       <IconButton icon='sort' title='Sort' onClick={onSortMenuHandler} />
@@ -119,17 +132,18 @@ const NavigationButtons = (props: { type: 'rail' | 'bottom' | 'tabs' }) => (
 
 const getNavButtonsclass = (type: string) => {
   switch (type) {
-    case 'rail': return styles.navRail
-    case 'bottom': return styles.navBottomBar
-    case 'tabs': return styles.navTabs
-    default: throw new Error('Unknown type')
+    case 'rail':
+      return styles.navRail
+    case 'bottom':
+      return styles.navBottomBar
+    case 'tabs':
+      return styles.navTabs
+    default:
+      throw new Error('Unknown type')
   }
 }
 
 const Library = (): JSXElement => {
-  const [entities] = useEntitiesStore()
-  const isMedium = createMediaQuery('(max-width: 500px)')
-
   const selectedPage = useMapRouteToValue({
     '/library/tracks': () => MusicItemType.TRACK,
     '/library/albums': () => MusicItemType.ALBUM,
@@ -138,6 +152,7 @@ const Library = (): JSXElement => {
   })
 
   const pageConfig = createMemo(() => CONFIG.find((c) => c.type === selectedPage())!)
+  const isMedium = createMediaQuery('(max-width: 500px)')
 
   return (
     <Scaffold
@@ -147,9 +162,15 @@ const Library = (): JSXElement => {
       bottomBar={isMedium() && IS_DEVICE_A_MOBILE && <NavigationButtons type='bottom' />}
     >
       <Show
-        when={Object.keys(entities.tracks).length}
+        when={true /* leave condition true for fallback unless conditionally filtered */}
         fallback={
-          <MessageBanner title='Your Library is empty' button={{ title: 'Import some music', href: '/settings' }} />
+          <MessageBanner
+            title='Your Library is empty'
+            button={{
+              title: 'Import some music',
+              href: '/settings',
+            }}
+          />
         }
       >
         <div class={styles.content}>
