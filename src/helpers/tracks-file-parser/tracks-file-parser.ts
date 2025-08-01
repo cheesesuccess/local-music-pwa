@@ -7,6 +7,11 @@ export const tracksParser = async (
   files: FileWrapper[],
   trackParsed: TrackParsedFn,
 ): Promise<UnknownTrack[]> => {
+  // ✅ Skip parsing if input is already remote track metadata
+  if (files.length > 0 && (files as any)[0].url) {
+    return files as any as UnknownTrack[];
+  }
+
   const TrackWorkerModule = await import(
     './worker/tracks-file-parser-worker?worker&inline'
   )
