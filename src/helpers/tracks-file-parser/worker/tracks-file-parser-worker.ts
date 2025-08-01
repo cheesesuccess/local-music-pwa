@@ -52,8 +52,9 @@ self.addEventListener('message', async ({ data }: MessageEvent<FileWrapper[]>) =
       tracks.push(track)
     }
 
-    self.postMessage({ parsedCount: i + 1 } satisfies TrackParseMessage)
-  }
+    self.postMessage({ parsedCount: i + 1 } as TrackParseMessage)
+}
 
-  self.postMessage({ finished: true, tracks } satisfies TrackParseMessage)
+self.postMessage({ finished: true, tracks } as TrackParseMessage)
 })
+
