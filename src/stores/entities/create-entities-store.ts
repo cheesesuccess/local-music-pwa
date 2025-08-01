@@ -1,7 +1,7 @@
 import { batch } from 'solid-js'
 import { createStore, produce, SetStoreFunction } from 'solid-js/store'
 import { nanoid } from 'nanoid'
-import { getFilesFromDirectory, importCloudSongs } from '../../helpers/file-system'
+import { importCloudSongs } from '../../helpers/file-system'
 import { tracksParser } from '../../helpers/tracks-file-parser/tracks-file-parser'
 import {
   Track,
@@ -43,12 +43,31 @@ export const createEntitiesStore = () => {
     favorites: [],
   })
 
-  const addTracks = async () => {
+  const removeTracks = (ids: string[]) => {
+    setState(
+      'tracks',
+      produce((trackMap) => {
+        ids.forEach((id) => {
+          delete trackMap[id]
+        })
+      }),
+    )
+  }
+
+  const remove = () => {
+    setState({
+      tracks: {},
+      albums: {},
+      artists: {},
+      playlists: {},
+      favorites: [],
+    })
+  }
+
+  const importTracks = async () => {
     try {
-      // ✅ LOAD SONGS FROM CLOUD INSTEAD OF DEVICE
       const cloudTracks = await importCloudSongs()
       const unknownTracks = await tracksParser(cloudTracks, () => {})
-      // Transform into actual Track entities
       batch(() => {
         unknownTracks.forEach((track) => {
           const id = track.id || nanoid()
@@ -68,10 +87,58 @@ export const createEntitiesStore = () => {
     }
   }
 
-  return {
-    state,
-    setState,
-    addTracks,
+  const clearData = () => {
+    setState({
+      tracks: {},
+      albums: {},
+      artists: {},
+      playlists: {},
+      favorites: [],
+    })
   }
+
+  const playlistsActions = createPlaylistsActions(state, setState)
+
+  const actions = {
+    ...playlistsActions,
+    removeTracks,
+    remove,
+    importTracks,
+    clearData,
+  }
+
+  return [
+    state,
+    actions,
+    [
+      {
+        key: 'data-tracks',
+        selector: () => state.tracks,
+        load: (tracks: State['tracks']) => setState({ tracks }),
+      },
+      {
+        key: 'data-albums',
+        selector: () => state.albums,
+        load: (albums: State['albums']) => setState({ albums }),
+      },
+      {
+        key: 'data-artists',
+        selector: () => state.artists,
+        load: (artists: State['artists']) => setState({ artists }),
+      },
+      {
+        key: 'data-playlists',
+        selector: () => state.playlists,
+        load: (playlists: State['playlists']) => setState({ playlists }),
+      },
+      {
+        key: 'data-favorites',
+        selector: () => state.favorites,
+        load: (favorites: State['favorites']) => setState({ favorites }),
+      },
+    ],
+  ] as const
 }
-export const useEntitiesStore = () => [state, { addTracks }]
+
+// ✅ Export global instance
+export const [entitiesState, entitiesActions] = createEntitiesStore()
