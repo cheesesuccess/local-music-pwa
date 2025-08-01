@@ -1,12 +1,12 @@
 // src/pages/Library.jsx
 
 import { useEffect, useState } from 'react'
-import { STATIC_SONGS } from '@/data/static-songs'
-import { usePlayerStore } from '@/store/player-store'
-import { useLibraryStore } from '@/store/library-store'
-import TrackList from '@/components/TrackList'
-import PageWrapper from '@/components/PageWrapper'
-import ViewHeader from '@/components/ViewHeader'
+import { STATIC_SONGS } from '../data/static-songs'
+import { usePlayerStore } from '../store/player-store'
+import { useLibraryStore } from '../store/library-store'
+import TrackList from '../components/TrackList'
+import PageWrapper from '../components/PageWrapper'
+import ViewHeader from '../components/ViewHeader'
 
 export default function Library() {
   const { setQueue, setTrackIndex } = usePlayerStore()
