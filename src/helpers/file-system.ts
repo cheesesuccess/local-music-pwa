@@ -1,6 +1,6 @@
 helpers/file-system.ts
 
-import { STATIC_SONGS } from '@/data/static-songs'
+import { STATIC_SONGS } from '../data/static-songs'
 
 export const isNativeFileSystemSupported = false
 
