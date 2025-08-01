@@ -15,6 +15,12 @@ import { AppTopBar } from '~/components/app-top-bar/app-top-bar'
 import { createMediaQuery } from '~/helpers/hooks/create-media-query'
 import { clx, IS_DEVICE_A_MOBILE } from '~/utils'
 import * as styles from './library.css'
+import { entitiesActions } from '~/stores/entities/create-entities-store'
+
+onMount(() => {
+  entitiesActions.addTracks()
+})
+
 
 const [installEvent, setInstallEvent] = createSignal<BeforeInstallPromptEvent>()
 window.addEventListener('beforeinstallprompt', (e) => {
