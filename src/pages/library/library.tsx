@@ -1,5 +1,58 @@
-// src/pages/Library.jsx 
- import { useEffect, useState } from 'react' import { STATIC_SONGS } from '@/data/static-songs' import { usePlayerStore } from '@/store/player-store' import { useLibraryStore } from '@/store/library-store' import TrackList from '@/components/TrackList' import PageWrapper from '@/components/PageWrapper' import ViewHeader from '@/components/ViewHeader' export default function Library() { const { setQueue, setTrackIndex } = usePlayerStore() const { setTracks } = useLibraryStore() const [isLoading, setIsLoading] = useState(true) useEffect(() => { const loadStaticSongs = async () => { try { 
-// Load static songs from the repo 
+// src/pages/Library.jsx
 
-const formattedTracks = await Promise.all( STATIC_SONGS.map(async (song) => { const response = await fetch(song.src) const blob = await response.blob() return { name: song.title, path: song.src, getBlob: async () => blob, } }) ) setTracks(formattedTracks) setQueue(formattedTracks) setTrackIndex(0) } catch (error) { console.error('Failed to load static songs:', error) } finally { setIsLoading(false) } } loadStaticSongs() }, [setQueue, setTrackIndex, setTracks]) return ( <PageWrapper> <ViewHeader title="Library" /> {isLoading ? ( <div className="flex flex-1 items-center justify-center"> <span className="text-xs text-neutral-500">Loading songs...</span> </div> ) : ( <TrackList /> )} </PageWrapper> ) } 
+import { useEffect, useState } from 'react'
+import { STATIC_SONGS } from '@/data/static-songs'
+import { usePlayerStore } from '@/store/player-store'
+import { useLibraryStore } from '@/store/library-store'
+import TrackList from '@/components/TrackList'
+import PageWrapper from '@/components/PageWrapper'
+import ViewHeader from '@/components/ViewHeader'
+
+export default function Library() {
+  const { setQueue, setTrackIndex } = usePlayerStore()
+  const { setTracks } = useLibraryStore()
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const loadStaticSongs = async () => {
+      try {
+        // Load static songs from the repo
+        const formattedTracks = await Promise.all(
+          STATIC_SONGS.map(async (song) => {
+            const response = await fetch(song.src)
+            const blob = await response.blob()
+
+            return {
+              name: song.title,
+              path: song.src,
+              getBlob: async () => blob,
+            }
+          })
+        )
+
+        setTracks(formattedTracks)
+        setQueue(formattedTracks)
+        setTrackIndex(0)
+      } catch (error) {
+        console.error('Failed to load static songs:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadStaticSongs()
+  }, [setQueue, setTrackIndex, setTracks])
+
+  return (
+    <PageWrapper>
+      <ViewHeader title="Library" />
+      {isLoading ? (
+        <div className="flex flex-1 items-center justify-center">
+          <span className="text-xs text-neutral-500">Loading songs...</span>
+        </div>
+      ) : (
+        <TrackList />
+      )}
+    </PageWrapper>
+  )
+}
