@@ -74,4 +74,4 @@ export const createEntitiesStore = () => {
     addTracks,
   }
 }
-export const [entitiesState, entitiesActions] = createEntitiesStore()
+export const useEntitiesStore = () => [state, { addTracks }]
