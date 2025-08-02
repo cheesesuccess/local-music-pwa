@@ -5,29 +5,38 @@ export type TrackParsedFn = (totalParsedCount: number) => void
 
 export const tracksParser = async (
   files: FileWrapper[],
-  trackParsed: TrackParsedFn,
+  trackParsed: TrackParsedFn = () => {},
 ): Promise<UnknownTrack[]> => {
-  const TrackWorkerModule = await import(
-    './worker/tracks-file-parser-worker?worker&inline'
-  )
-  const TrackWorker = TrackWorkerModule.default
-
-  return new Promise((resolve, reject) => {
+  try {
+    const TrackWorkerModule = await import(
+      './worker/tracks-file-parser-worker?worker&inline'
+    )
+    const TrackWorker = TrackWorkerModule.default
     const worker = new TrackWorker()
 
-    worker.addEventListener('error', reject)
-    worker.addEventListener(
-      'message',
-      ({ data }: MessageEvent<TrackParseMessage>) => {
-        if (data.finished) {
-          resolve(data.tracks)
+    console.log('[tracksParser] Starting track parsing...')
+
+    return await new Promise((resolve, reject) => {
+      worker.addEventListener('error', (err) => {
+        console.error('[tracksParser] Worker error:', err)
+        reject(err)
+      })
+
+      worker.addEventListener('message', ({ data }: MessageEvent<UnknownTrack[]>) => {
+        if (Array.isArray(data)) {
+          console.log(`[tracksParser] Received ${data.length} tracks from worker`)
+          resolve(data)
         } else {
-          trackParsed(data.parsedCount)
+          console.warn('[tracksParser] Unexpected data received from worker:', data)
+          resolve([])
         }
-      },
-    )
+      })
 
-    worker.postMessage({ files })
-  })
+      // ✅ This is the most important fix — make sure worker expects { files }
+      worker.postMessage({ files })
+    })
+  } catch (err) {
+    console.error('[tracksParser] Failed to start worker:', err)
+    return []
+  }
 }
-
