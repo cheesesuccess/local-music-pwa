@@ -96,7 +96,7 @@ const Search = (): JSXElement => {
       scrollable
     >
       <div class={styles.chipsContainer}>
-        <For each={pages}>
+        <For each={Array.isArray(pages) ? pages : []}>
           {(page) => (
             <button
               class={clx(styles.chip, page.isSelected() && styles.chipSelected)}
@@ -112,7 +112,7 @@ const Search = (): JSXElement => {
         when={isNotEmpty()}
         fallback={<MessageBanner message='Nothing found' />}
       >
-        <For each={pages}>
+        <For each={Array.isArray(pages) ? pages : []}>
           {(page) => (
             <Show when={page.itemIds().length && page.isSelected()}>
               <h1 class={styles.resulsTitle}>{page.title}</h1>
