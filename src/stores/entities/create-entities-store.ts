@@ -64,9 +64,7 @@ export const createEntitiesStore = () => {
     })
   }
 
-// Add inside importTracks()
-console.log("📥 create-entities-store.ts: importTracks started")
-      
+    
   const importTracks = async () => {
     try {
       const cloudTracks = await importCloudSongs()
@@ -146,3 +144,48 @@ console.log("📥 create-entities-store.ts: importTracks started")
 // ✅ Export global instance
 export const [entitiesState, entitiesActions] = createEntitiesStore()
 
+
+
+
+
+
+
+
+
+
+
+
+
+import { createStore } from 'solid-js/store'
+import { getFilesFromDirectory } from '~/helpers/file-system'
+import { tracksParser } from '~/helpers/tracks-file-parser/tracks-file-parser'
+import { Track } from '~/types/types'
+
+export function createEntitiesStore() {
+  const [entities, setEntities] = createStore({
+    tracks: {} as Record<string, Track>,
+  })
+
+  async function importTracks() {
+    console.log("🚀 create-entities-store.ts: Starting importTracks()")
+    const files = await getFilesFromDirectory(['mp3', 'wav', 'ogg'])
+    if (!files) {
+      console.warn("⚠️ No files returned by getFilesFromDirectory()")
+      return
+    }
+
+    const parsedTracks = await tracksParser(files, (count) => {
+      console.log(`📥 Parsing track ${count}`)
+    })
+
+    const tracksMap: Record<string, Track> = {}
+    for (const track of parsedTracks) {
+      tracksMap[track.id] = track
+    }
+
+    setEntities('tracks', tracksMap)
+    console.log("✅ importTracks completed:", Object.keys(tracksMap).length)
+  }
+
+  return [entities, { importTracks }] as const
+}
