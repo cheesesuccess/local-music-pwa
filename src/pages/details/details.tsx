@@ -141,7 +141,7 @@ const DetailsPage = (props: DetailsPageConfig) => {
             <h1 class={styles.title}>{data().item.name}</h1>
 
             <div class={styles.secondary}>
-              <For each={props.info?.(data().item) || []}>
+              <For each={Array.isArray(props.info?.(data().item)) ? props.info?.(data().item) : []}>
                 {(infoItem) => <div>{infoItem}</div>}
               </For>
             </div>
