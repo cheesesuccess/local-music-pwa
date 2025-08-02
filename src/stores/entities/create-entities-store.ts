@@ -64,6 +64,9 @@ export const createEntitiesStore = () => {
     })
   }
 
+// Add inside importTracks()
+console.log("📥 create-entities-store.ts: importTracks started")
+      
   const importTracks = async () => {
     try {
       const cloudTracks = await importCloudSongs()
@@ -142,3 +145,4 @@ export const createEntitiesStore = () => {
 
 // ✅ Export global instance
 export const [entitiesState, entitiesActions] = createEntitiesStore()
+
