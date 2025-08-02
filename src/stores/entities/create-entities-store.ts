@@ -41,7 +41,7 @@ export const createEntitiesStore = () => {
       console.log('[entities-store] Fetching cloud songs...')
       const fileWrappers = await getCloudSongs()
 
-      if (fileWrappers.length === 0) {
+      if (!fileWrappers || fileWrappers.length === 0) {
         toast.error('No songs found in songs.json or URL')
         console.warn('[entities-store] No songs returned from getCloudSongs()')
         return
@@ -50,10 +50,10 @@ export const createEntitiesStore = () => {
       const unknownTracks: UnknownTrack[] = await tracksParser(fileWrappers)
 
       if (!Array.isArray(unknownTracks)) {
-  console.error('[entities-store] tracksParser returned invalid data:', unknownTracks)
-  return
-}
-      
+        console.error('[entities-store] tracksParser returned invalid result:', unknownTracks)
+        return
+      }
+
       batch(() => {
         unknownTracks.forEach((track) => {
           const trackId = nanoid()
@@ -106,8 +106,7 @@ export const createEntitiesStore = () => {
   return {
     state,
     setState,
-    loadFromCloud,
+    loadFromCloud, // ✅ must be returned
     ...playlistsActions,
   }
 }
-
