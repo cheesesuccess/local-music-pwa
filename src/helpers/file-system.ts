@@ -1,30 +1,29 @@
 import { FileWrapper } from '../types/types'
 
+// This fixes the Render build error by keeping the expected export
+export const isNativeFileSystemSupported = false
+
 /**
  * This version bypasses local file selection and instead fetches a cloud JSON
  * file containing song metadata and URLs.
  */
+const SONGS_JSON_URL = '/songs.json' // Change to full cloud URL if hosted elsewhere
 
-const SONGS_JSON_URL = '/songs.json'; // You can replace this with a cloud URL like "https://example.com/songs.json"
-
-/**
- * Simulates getting files from cloud-based JSON file instead of filesystem.
- */
 export const getCloudSongs = async (): Promise<FileWrapper[]> => {
   try {
-    console.log('[file-system.ts] Fetching songs from:', SONGS_JSON_URL);
+    console.log('[file-system.ts] Fetching songs from:', SONGS_JSON_URL)
 
-    const response = await fetch(SONGS_JSON_URL);
+    const response = await fetch(SONGS_JSON_URL)
     if (!response.ok) {
-      console.error('[file-system.ts] Failed to fetch songs.json:', response.statusText);
-      return [];
+      console.error('[file-system.ts] Failed to fetch songs.json:', response.statusText)
+      return []
     }
 
-    const songs = await response.json();
+    const songs = await response.json()
 
     if (!Array.isArray(songs)) {
-      console.error('[file-system.ts] songs.json is not an array');
-      return [];
+      console.error('[file-system.ts] songs.json is not an array')
+      return []
     }
 
     const formatted: FileWrapper[] = songs.map((song, idx) => ({
@@ -37,12 +36,12 @@ export const getCloudSongs = async (): Promise<FileWrapper[]> => {
       image: song.image || '',
       id: song.id || `song-${idx + 1}`,
       type: 'audio/mpeg',
-    }));
+    }))
 
-    console.log(`[file-system.ts] Loaded ${formatted.length} songs from cloud`);
-    return formatted;
+    console.log(`[file-system.ts] Loaded ${formatted.length} songs from cloud`)
+    return formatted
   } catch (err) {
-    console.error('[file-system.ts] Error fetching songs:', err);
-    return [];
+    console.error('[file-system.ts] Error fetching songs:', err)
+    return []
   }
-};
+}
