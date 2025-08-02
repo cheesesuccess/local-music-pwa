@@ -58,3 +58,17 @@ self.addEventListener('message', async ({ data }: MessageEvent<FileWrapper[]>) =
 self.postMessage({ finished: true, tracks } as TrackParseMessage)
 })
 
+
+
+
+
+
+// helpers/tracks-file-parser/worker/tracks-file-parser-worker.ts
+
+console.log("👷‍♂️ Worker: Starting track parsing")
+
+// After const parseAllTracks = async (...) {
+console.log("📦 Worker: Received", inputFiles.length, "files")
+
+// Inside for loop after const metadata = await parseTrack(file)
+console.log("✅ Worker: Parsed track", parsedCount + 1)
