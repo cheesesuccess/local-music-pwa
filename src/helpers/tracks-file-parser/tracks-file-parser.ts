@@ -7,8 +7,6 @@ export const tracksParser = async (
   files: FileWrapper[],
   trackParsed: TrackParsedFn,
 ): Promise<UnknownTrack[]> => {
-  console.log("🎧 tracksParser: Received", files.length, "files")
-
   const TrackWorkerModule = await import(
     './worker/tracks-file-parser-worker?worker&inline'
   )
@@ -17,16 +15,11 @@ export const tracksParser = async (
   return new Promise((resolve, reject) => {
     const worker = new TrackWorker()
 
-    worker.addEventListener('error', (err) => {
-      console.error("❌ Worker Error:", err)
-      reject(err)
-    })
-
+    worker.addEventListener('error', reject)
     worker.addEventListener(
       'message',
       ({ data }: MessageEvent<TrackParseMessage>) => {
         if (data.finished) {
-          console.log("✅ Worker finished parsing", data.tracks.length, "tracks")
           resolve(data.tracks)
         } else {
           trackParsed(data.parsedCount)
