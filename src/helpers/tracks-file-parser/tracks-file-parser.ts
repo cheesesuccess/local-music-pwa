@@ -27,6 +27,7 @@ export const tracksParser = async (
       },
     )
 
-    worker.postMessage(files)
+    worker.postMessage({ files })
   })
 }
+
