@@ -1,74 +1,40 @@
 /// <reference lib='WebWorker' />
 
 import { Buffer } from 'buffer'
-import { parseBuffer as parseMetadata } from 'music-metadata'
 import { TrackParseMessage } from '../message-types'
 import type { UnknownTrack, FileWrapper } from '../../../types/types'
-import { extractColorFromImage } from './color-from-image'
-
-// @ts-ignore
-globalThis.Buffer = Buffer
 
 declare const self: DedicatedWorkerGlobalScope
 
-const FILE_SIZE_LIMIT_500MB = 5e8
-
-const parseTrack = async (
-  fileWrapper: FileWrapper,
-): Promise<UnknownTrack | null> => {
+self.onmessage = async (e: MessageEvent<TrackParseMessage>) => {
   try {
-    const file =
-      fileWrapper.type === 'file'
-        ? fileWrapper.file
-        : await fileWrapper.file.getFile()
+    const { files } = e.data
 
-    if (file.size > FILE_SIZE_LIMIT_500MB) return null
+    console.log('[worker] Received files to parse:', files?.length)
 
-    const fileBuffer = await new Response(file).arrayBuffer()
-    const fileUint8 = new Uint8Array(fileBuffer)
+    const parsedTracks: UnknownTrack[] = []
 
-    const metadata = await parseMetadata(fileUint8, { mimeType: file.type })
+    for (const file of files) {
+      if (!file || !file.url) {
+        console.warn('[worker] Skipping file with no URL:', file)
+        continue
+      }
 
-    return {
-      id: file.name,
-      title: metadata.common.title || file.name,
-      artist: metadata.common.artist || 'Unknown Artist',
-      album: metadata.common.album || '',
-      coverUrl: '', // placeholder
-      url: URL.createObjectURL(file),
-      duration: metadata.format.duration || 0,
-      source: 'local',
+      parsedTracks.push({
+        id: file.id || file.name,
+        title: file.name,
+        artist: file.artist || 'Unknown Artist',
+        album: file.album || '',
+        path: file.url,
+        image: file.image || '',
+        duration: file.duration || 0,
+      })
     }
-  } catch {
-    return null
+
+    console.log('[worker] Parsed tracks count:', parsedTracks.length)
+    self.postMessage(parsedTracks)
+  } catch (err) {
+    console.error('[worker] Error parsing tracks:', err)
+    self.postMessage([])
   }
 }
-
-self.addEventListener('message', async ({ data }: MessageEvent<FileWrapper[]>) => {
-  const tracks: UnknownTrack[] = []
-  for (let i = 0; i < data.length; i++) {
-    const track = await parseTrack(data[i])
-    if (track) {
-      tracks.push(track)
-    }
-
-    self.postMessage({ parsedCount: i + 1 } as TrackParseMessage)
-}
-
-self.postMessage({ finished: true, tracks } as TrackParseMessage)
-})
-
-
-
-
-
-
-// helpers/tracks-file-parser/worker/tracks-file-parser-worker.ts
-
-console.log("👷‍♂️ Worker: Starting track parsing")
-
-// After const parseAllTracks = async (...) {
-console.log("📦 Worker: Received", inputFiles.length, "files")
-
-// Inside for loop after const metadata = await parseTrack(file)
-console.log("✅ Worker: Parsed track", parsedCount + 1)
