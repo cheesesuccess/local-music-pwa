@@ -36,7 +36,25 @@ export const tracksParser = async (
   })
 }
 
-/ helpers/tracks-file-parser/tracks-file-parser.ts
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import { FileWrapper, UnknownTrack } from '../../types/types'
 import { TrackParseMessage } from './message-types'
@@ -47,7 +65,7 @@ export const tracksParser = async (
   files: FileWrapper[],
   trackParsed: TrackParsedFn,
 ): Promise<UnknownTrack[]> => {
-  console.log("🎧 tracks-file-parser.ts: tracksParser invoked with", files)
+  console.log("🎧 tracksParser: Received", files.length, "files")
 
   const TrackWorkerModule = await import(
     './worker/tracks-file-parser-worker?worker&inline'
@@ -57,11 +75,16 @@ export const tracksParser = async (
   return new Promise((resolve, reject) => {
     const worker = new TrackWorker()
 
-    worker.addEventListener('error', reject)
+    worker.addEventListener('error', (err) => {
+      console.error("❌ Worker Error:", err)
+      reject(err)
+    })
+
     worker.addEventListener(
       'message',
       ({ data }: MessageEvent<TrackParseMessage>) => {
         if (data.finished) {
+          console.log("✅ Worker finished parsing", data.tracks.length, "tracks")
           resolve(data.tracks)
         } else {
           trackParsed(data.parsedCount)
