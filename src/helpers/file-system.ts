@@ -99,7 +99,10 @@ export async function importCloudSongs() {
   }));
 }
 
-// helpers/file-system.ts
+
+
+
+
 
 import { FileWrapper } from '../types/types'
 import { IS_DEVICE_A_MOBILE, wait } from '../utils/utils'
@@ -117,11 +120,12 @@ export const getFileRefsRecursively = async (
       const isValidFile = extensions.some((ext) =>
         fileRef.name.endsWith(`.${ext}`),
       )
-
       if (isValidFile) {
+        console.log("✅ Found valid file:", fileRef.name)
         files.push(fileRef)
       }
     } else if (fileRef.kind === 'directory') {
+      console.log("📁 Traversing directory:", fileRef.name)
       files = [...files, ...(await getFileRefsRecursively(fileRef, extensions))]
     }
   }
@@ -137,19 +141,23 @@ export const getFilesFromLegacyInputEvent = (
 
   return Array.from(files)
     .filter((file) => extensions.some((ext) => file.name.endsWith(`.${ext}`)))
-    .map((file): FileWrapper => ({ type: 'file', file }))
+    .map((file): FileWrapper => {
+      console.log("📤 Legacy file input found:", file.name)
+      return { type: 'file', file }
+    })
 }
 
 export const getFilesFromDirectory = async (
   extensions: string[],
 ): Promise<FileWrapper[] | null> => {
-  console.log("📂 file-system.ts: Opening directory picker")
+  console.log("📂 getFilesFromDirectory() triggered")
   if (isNativeFileSystemSupported) {
     try {
       const directory = await showDirectoryPicker()
       const filesRefs = await getFileRefsRecursively(directory, extensions)
       return filesRefs.map((ref) => ({ type: 'fileRef', file: ref }))
-    } catch {
+    } catch (err) {
+      console.error("❌ Error in native file picker:", err)
       return null
     }
   }
