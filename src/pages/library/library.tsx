@@ -13,7 +13,13 @@ import { Scaffold } from '~/components/scaffold/scaffold'
 import { AppTopBar } from '~/components/app-top-bar/app-top-bar'
 import { createMediaQuery } from '~/helpers/hooks/create-media-query'
 import { clx, IS_DEVICE_A_MOBILE } from '~/utils'
-import * as styles from './library.css'
+// Temporary fallback to prevent crash if CSS vars are missing
+const styles = {
+  root: '',
+  rootMobile: '',
+  header: '',
+  main: '',
+}
 
 const [installEvent, setInstallEvent] = createSignal<Event | null>(null)
 
@@ -23,14 +29,17 @@ export default function Library(): JSXElement {
 
   createEffect(() => {
     console.log('[library.tsx] Attempting to load songs from cloud...')
-    loadFromCloud()
-      .then(() => console.log('[library.tsx] Songs loaded successfully.'))
-      .catch((err) => console.error('[library.tsx] Error loading songs:', err))
+    if (typeof loadFromCloud === 'function') {
+      loadFromCloud()
+        .then(() => console.log('[library.tsx] Songs loaded successfully.'))
+        .catch((err) => console.error('[library.tsx] Error loading songs:', err))
+    } else {
+      console.error('[library.tsx] loadFromCloud is not a function:', loadFromCloud)
+    }
   })
 
   const menu = useMenu()
   const config = useMapRouteToValue<LibraryPageConfig>(CONFIG)
-
   const isDesktop = createMediaQuery('(min-width: 1024px)')
 
   return (
@@ -39,8 +48,8 @@ export default function Library(): JSXElement {
       topBar={<AppTopBar />}
       menu={menu}
     >
-      <Show when={config()?.header}>
-        {(header) => <header class={styles.header}>{header()}</header>}
+      <Show when={typeof config === 'function' && config()?.header}>
+        {(header) => <header class={styles.header}>{header?.()}</header>}
       </Show>
 
       <main class={styles.main}>
