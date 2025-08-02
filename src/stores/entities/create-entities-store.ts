@@ -49,6 +49,11 @@ export const createEntitiesStore = () => {
 
       const unknownTracks: UnknownTrack[] = await tracksParser(fileWrappers)
 
+      if (!Array.isArray(unknownTracks)) {
+  console.error('[entities-store] tracksParser returned invalid data:', unknownTracks)
+  return
+}
+      
       batch(() => {
         unknownTracks.forEach((track) => {
           const trackId = nanoid()
@@ -105,3 +110,4 @@ export const createEntitiesStore = () => {
     ...playlistsActions,
   }
 }
+
